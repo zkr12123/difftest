@@ -219,6 +219,7 @@ Emulator::Emulator(int argc, const char *argv[]):
 
   // init ram
   init_ram(args.image);
+  // printf("Finished init_ram.\n");
 #ifdef ENABLE_CHISEL_DB
   init_db(args.dump_db);
 #endif
@@ -310,12 +311,16 @@ inline void Emulator::single_cycle() {
     uint64_t begin = dut_ptr->io_logCtrl_log_begin;
     uint64_t end   = dut_ptr->io_logCtrl_log_end;
     bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range || force_dump_wave) { tfp->dump(cycle); }
+    // if (in_range || force_dump_wave) { tfp->dump(cycle); }
+    tfp->dump(cycles * 2);
+    // printf("in_range: %d // force_dump_wave: %d \n", in_range, force_dump_wave);
+    // printf("io_logCtrl_log_begin: %lu // io_logCtrl_log_end: %lu \n", begin, end);
   }
 #endif
 
   dut_ptr->clock = 1;
   dut_ptr->eval();
+  tfp->dump(cycles*2 + 1);
 
 #ifdef WITH_DRAMSIM3
   dramsim3_step();
@@ -336,6 +341,7 @@ uint64_t Emulator::execute(uint64_t max_cycle, uint64_t max_instr) {
 
   difftest_init();
   init_device();
+  printf("Finished init_device.\n");
   if (args.enable_diff) {
     init_goldenmem();
     size_t ref_ramsize = args.ram_size ? EMU_RAM_SIZE : 0;
@@ -437,9 +443,8 @@ uint64_t Emulator::execute(uint64_t max_cycle, uint64_t max_instr) {
         dut_ptr->io_perfInfo_dump = 1;
       }
     }
-
+    // printf("Before single cycle\n");
     single_cycle();
-
     max_cycle --;
     dut_ptr->io_perfInfo_clean = 0;
     dut_ptr->io_perfInfo_dump = 0;

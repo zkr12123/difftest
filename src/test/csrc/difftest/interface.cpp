@@ -29,6 +29,7 @@ extern "C" int v_difftest_step() {
 
 INTERFACE_TRAP_EVENT {
   RETURN_NO_NULL
+  // printf("coreid: %d\n", coreid);
   auto packet = difftest[coreid]->get_trap_event();
   packet->valid    = valid;
   packet->code     = code;

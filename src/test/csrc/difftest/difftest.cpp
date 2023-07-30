@@ -158,6 +158,7 @@ int Difftest::step() {
   } else {
     // TODO: is this else necessary?
     for (int i = 0; i < DIFFTEST_COMMIT_WIDTH && dut.commit[i].valid; i++) {
+      // printf("do_instr_commit(%d)\n", i);
       do_instr_commit(i);
       dut.commit[i].valid = 0;
       num_commit++;
@@ -244,7 +245,11 @@ void Difftest::do_instr_commit(int i) {
   uint64_t commit_instr = dut.commit[i].inst;
 #endif
   state->record_inst(commit_pc, commit_instr, (dut.commit[i].rfwen | dut.commit[i].fpwen), dut.commit[i].wdest, get_commit_data(i), dut.commit[i].lqidx, dut.commit[i].sqidx, dut.commit[i].robidx, dut.commit[i].isLoad, dut.commit[i].isStore, dut.commit[i].skip != 0);
-
+  // printf("================================================================\n");
+  // printf("================================================================\n");
+  // printf("================================================================\n");
+  // printf("commit_pc: %lx\n", commit_pc);
+  // proxy->isa_reg_display();
 #ifdef DEBUG_MODE_DIFF
   int spike_invalid = test_spike();
   if (!spike_invalid && (IS_DEBUGCSR(commit_instr) || IS_TRIGGERCSR(commit_instr))) {
@@ -276,6 +281,15 @@ void Difftest::do_instr_commit(int i) {
     if (realWen) {
       // We use the physical register file to get wdata
       // TODO: what if skip with fpwen?
+      // printf("Skip with Wen: wdest=%lx  data=%lx\n", dut.commit[i].wdest, get_commit_data(i));
+      // printf("Current DUT PysiccalRegs: \n");
+      // for (int j = 1; j < 32; j ++) {
+      //   printf("PReg %d = %lx \n", j, dut.pregs.gpr[j]);
+      // }
+      // printf("Current DUT Regs: \n");
+      // for (int j = 1; j < 32; j ++) {
+      //   printf("Reg %d = %lx \n", j, dut.regs.gpr[j]);
+      // }
       ref_regs_ptr[dut.commit[i].wdest] = get_commit_data(i);
       // printf("Debug Mode? %x is ls? %x\n", DEBUG_MEM_REGION(dut.commit[i].valid, dut.commit[i].pc), IS_LOAD_STORE(dut.commit[i].inst));
       // printf("skip %x %x %x %x %x\n", dut.commit[i].pc, dut.commit[i].inst, get_commit_data(i), dut.commit[i].wpdest, dut.commit[i].wdest);
@@ -373,7 +387,9 @@ void Difftest::do_first_instr_commit() {
     nemu_this_pc = FIRST_INST_ADDRESS;
 
     proxy->load_flash_bin(get_flash_path(), get_flash_size());
+    printf("NEMU do_first_instr_commit -> load_flash_bin\n");
     proxy->memcpy(PMEM_BASE, get_img_start(), get_img_size(), DIFFTEST_TO_REF);
+    printf("NEMU do_first_instr_commit -> memcpy\n");
     // Use a temp variable to store the current pc of dut
     uint64_t dut_this_pc = dut.csr.this_pc;
     // NEMU should always start at FIRST_INST_ADDRESS
