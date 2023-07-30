@@ -15,7 +15,7 @@
 #***************************************************************************************
 
 SIM_TOP    ?= SimTop
-DESIGN_DIR ?= ..
+DESIGN_DIR ?= ../fpga
 NUM_CORES  ?= 1
 
 # Set USE_DIFFTEST_MAIN to 1 in your design's Makefile to generate Verilog by difftest
@@ -23,8 +23,9 @@ NUM_CORES  ?= 1
 # Set this variable if your design is written in Verilog.
 USE_DIFFTEST_MAIN ?= 0
 
-BUILD_DIR  = $(DESIGN_DIR)/build
-SIM_TOP_V  = $(BUILD_DIR)/$(SIM_TOP).v
+BUILD_DIR  = $(DESIGN_DIR)/build/generated-src
+# SIM_TOP_V  = $(BUILD_DIR)/$(SIM_TOP).v
+SIM_TOP_V = $(BUILD_DIR)/freechips.rocketchip.system.LvNAConfigemu.v
 
 DIFF_SCALA_FILE = $(shell find ./src/main/scala -name '*.scala')
 SCALA_FILE = $(shell find $(DESIGN_DIR)/src/main/scala -name '*.scala' 2>/dev/null)
@@ -69,18 +70,20 @@ DIFFTEST_CXXFILES = $(shell find $(DIFFTEST_CSRC_DIR) -name "*.cpp")
 
 PLUGIN_CHEAD_DIR = $(abspath ./src/test/csrc/plugin/include)
 
-SIM_VSRC = $(shell find ./src/test/vsrc/common -name "*.v" -or -name "*.sv")
+ROCKET_VDEPS = $(BUILD_DIR)/freechips.rocketchip.system.LvNAConfigemu.behav_srams.v $(shell find $(BUILD_DIR)/freechips.rocketchip.system.LvNAConfigemu -name "*.v" ! -name "SimJTAG.v") $(shell find ../src/main/resources/vsrc -name "UARTPrinter.v" -or -name "EICG_wrapper.v")
+SIM_VSRC = $(shell find ./src/test/vsrc/common -name "*.v" -or -name "*.sv") $(ROCKET_VDEPS)
+# SIM_VSRC = $(shell find ./src/test/vsrc/common -name "*.v" -or -name "*.sv") $(shell find $(BUILD_DIR) -name "*.v" ! -wholename $(SIM_TOP_V))
 
 include verilator.mk
 include vcs.mk
 
-ifndef NEMU_HOME
-$(error NEMU_HOME is not set)
-endif
-REF_SO := $(NEMU_HOME)/build/riscv64-nemu-interpreter-so
-$(REF_SO):
-	$(MAKE) -C $(NEMU_HOME) riscv64-xs-ref_defconfig
-	$(MAKE) -C $(NEMU_HOME)
+# ifndef NEMU_HOME
+# $(error NEMU_HOME is not set)
+# endif
+# REF_SO := $(NEMU_HOME)/build/riscv64-nemu-interpreter-so
+# $(REF_SO):
+# 	$(MAKE) -C $(NEMU_HOME) riscv64-xs-ref_defconfig
+# 	$(MAKE) -C $(NEMU_HOME)
 
 SEED ?= $(shell shuf -i 1-10000 -n 1)
 

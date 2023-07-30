@@ -29,7 +29,8 @@
 #define DEFAULT_EMU_RAM_SIZE (8 * 1024 * 1024 * 1024UL) // 8 GB
 
 // physical memory base address
-#define PMEM_BASE 0x80000000UL
+// #define PMEM_BASE 0x80000000UL
+#define PMEM_BASE 0x100000000UL
 
 // first valid instruction's address, difftest starts from this instruction
 #ifndef FIRST_INST_ADDRESS

@@ -20,6 +20,8 @@ import chisel3._
 import chisel3.util._
 import Chisel.BlackBox
 import chisel3.experimental.{DataMirror, ExtModule}
+// import chisel3.experimental._
+import chisel3.core.ActualDirection
 
 trait DifftestParameter {
 }
@@ -220,7 +222,9 @@ class DiffRunaheadMemdepPredIO extends DifftestBundle with DifftestWithIndex {
   val oracle_vaddr  = Output(UInt(64.W))
 }
 
-abstract class DifftestModule[T <: DifftestBundle] extends ExtModule with HasExtModuleInline
+/* Change ExtModule to BlackBox to support chisel 3.2 */
+// abstract class DifftestModule[T <: DifftestBundle] extends ExtModule with HasExtModuleInline
+abstract class DifftestModule[T <: DifftestBundle] extends BlackBox with HasBlackBoxInline
 {
   val io: T
 
@@ -251,14 +255,15 @@ abstract class DifftestModule[T <: DifftestBundle] extends ExtModule with HasExt
   def moduleBody: String = {
     // ExtModule implicitly adds io_* prefix to the IOs (because the IO val is named as io).
     // This is different from BlackBoxes.
+    /* Removing io_ prefix due to change to blackbox */
     val interfaces = io.elements.toSeq.reverse.flatMap{ case (name, data) =>
       data match {
-        case vec: Vec[Data] => vec.zipWithIndex.map{ case (v, i) => (s"io_${name}_$i", v) }
-        case _ => Seq((s"io_$name", data))
+        case vec: Vec[Data] => vec.zipWithIndex.map{ case (v, i) => (s"${name}_$i", v) }
+        case _ => Seq((s"$name", data))
       }
     }
     // (1) DPI-C function prototype
-    val dpicInterfaces = interfaces.filterNot(_._1 == "io_clock")
+    val dpicInterfaces = interfaces.filterNot(_._1 == "clock")
     val dpicName = s"v_difftest_${moduleName.replace("Difftest", "")}"
     val dpicDecl =
       s"""
@@ -276,7 +281,7 @@ abstract class DifftestModule[T <: DifftestBundle] extends ExtModule with HasExt
          |`ifndef SYNTHESIS
          |`ifdef DIFFTEST
          |$dpicDecl
-         |  always @(posedge io_clock) begin
+         |  always @(posedge clock) begin
          |    $dpicName (${dpicInterfaces.map(_._1).mkString(",")});
          |  end
          |`endif

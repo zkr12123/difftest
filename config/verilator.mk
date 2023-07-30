@@ -33,10 +33,10 @@
 # WITH_DRAMSIM3 ?= 1
 
 # Enable chisel database
-WITH_CHISELDB ?= 1
+# WITH_CHISELDB ?= 1
 
 # Enable constantin
-WITH_CONSTANTIN ?= 1
+# WITH_CONSTANTIN ?= 1
 
 # Default output period control
 # output will be generated when (B<=GTimer<=E) && (L < loglevel)

@@ -14,14 +14,17 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+/* Removed Difftest main as it is not used in chisel generated design */
+
 package difftest
 
 import chisel3._
 import chisel3.util._
-import chisel3.stage._
+// import chisel3.stage._
 
 // Main class to generat difftest modules when design is not written in chisel.
 class DifftestTop extends Module {
+    val io = IO(new Bundle{})
     var difftest_arch_event = Module(new DifftestArchEvent);
     var difftest_basic_instr_commit = Module(new DifftestBasicInstrCommit);
     var difftest_instr_commit = Module(new DifftestInstrCommit);
@@ -51,8 +54,8 @@ class DifftestTop extends Module {
     var difftest_runahead_memdep_pred = Module(new DifftestRunaheadMemdepPred);
 }
 
-object DifftestMain extends App {
-  (new ChiselStage).execute(args, Seq(
-      ChiselGeneratorAnnotation(() => new DifftestTop))
-  )
-}
+// object DifftestMain extends App {
+//   (new ChiselStage).execute(args, Seq(
+//       ChiselGeneratorAnnotation(() => new DifftestTop))
+//   )
+// }

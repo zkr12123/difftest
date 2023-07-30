@@ -16,11 +16,12 @@
 
 include config/verilator.mk
 
+# EMU_TOP      = SimTop
 EMU_TOP      = SimTop
 
 EMU_CSRC_DIR = $(abspath ./src/test/csrc)
 EMU_CXXFILES = $(shell find $(EMU_CSRC_DIR) -name "*.cpp") $(SIM_CXXFILES) $(DIFFTEST_CXXFILES)
-EMU_CXXFLAGS += -std=c++11 -static -Wall -I$(EMU_CSRC_DIR) -I$(SIM_CSRC_DIR) -I$(DIFFTEST_CSRC_DIR) -I$(PLUGIN_CHEAD_DIR)
+EMU_CXXFLAGS += -std=c++11 -static -Wall -I$(EMU_CSRC_DIR) -I$(SIM_CSRC_DIR) -I$(DIFFTEST_CSRC_DIR) -I$(PLUGIN_CHEAD_DIR) -DFIRST_INST_ADDRESS=0x100000000
 EMU_CXXFLAGS += -DVERILATOR -DNUM_CORES=$(NUM_CORES)
 EMU_CXXFLAGS += $(shell sdl2-config --cflags) -fPIE
 
@@ -73,7 +74,7 @@ VEXTRA_FLAGS += --no-timing
 endif
 
 # Verilator trace support
-EMU_TRACE ?=
+EMU_TRACE ?= 1
 ifneq (,$(filter $(EMU_TRACE),1 vcd VCD))
 VEXTRA_FLAGS += --trace
 endif
@@ -113,6 +114,13 @@ ifeq ($(RELEASE),1)
 EMU_CXXFLAGS += -DBASIC_DIFFTEST_ONLY
 endif
 
+# Verilator DeBug options
+VL_DEBUG ?= 
+ifeq ($(VL_DEBUG),1)
+EMU_CXXFLAGS += -DVL_DEBUG
+EMU_CXXFLAGS += -ggdb
+endif
+
 # --trace
 VERILATOR_FLAGS =                   \
   --top-module $(EMU_TOP)           \
@@ -144,9 +152,9 @@ $(EMU_MK): $(SIM_TOP_V) | $(EMU_DEPS)
 	@date -R | tee -a $(TIMELOG)
 	$(TIME_CMD) verilator --cc --exe $(VERILATOR_FLAGS) \
 		-o $(abspath $(EMU)) -Mdir $(@D) $^ $(EMU_DEPS) $(CHISELDB_EXTRA_ARG) $(CONSTANTIN_SRC)
-	find -L $(BUILD_DIR) -name "VSimTop.h" | xargs sed -i 's/private/public/g'
-	find -L $(BUILD_DIR) -name "VSimTop.h" | xargs sed -i 's/const vlSymsp/vlSymsp/g'
-	find -L $(BUILD_DIR) -name "VSimTop__Syms.h" | xargs sed -i 's/VlThreadPool\* const/VlThreadPool*/g'
+	find -L $(BUILD_DIR)/emu-compile -name "V$(EMU_TOP).h" | xargs sed -i 's/private/public/g'
+	find -L $(BUILD_DIR) -name "V$(EMU_TOP).h" | xargs sed -i 's/const vlSymsp/vlSymsp/g'
+	find -L $(BUILD_DIR) -name "V$(EMU_TOP)__Syms.h" | xargs sed -i 's/VlThreadPool\* const/VlThreadPool*/g'
 
 EMU_COMPILE_FILTER =
 # 2> $(BUILD_DIR)/g++.err.log | tee $(BUILD_DIR)/g++.out.log | grep 'g++' | awk '{print "Compiling/Generating", $$NF}'
@@ -168,9 +176,9 @@ endif
 B ?= 0
 E ?= 0
 
-ifndef NOOP_HOME
-$(error NOOP_HOME is not set)
-endif
+# ifndef NOOP_HOME
+# $(error NOOP_HOME is not set)
+# endif
 EMU_FLAGS = -s $(SEED) -b $(B) -e $(E) $(SNAPSHOT_OPTION) $(WAVEFORM) $(EMU_ARGS)
 
 emu: $(EMU)
